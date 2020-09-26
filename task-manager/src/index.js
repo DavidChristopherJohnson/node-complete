@@ -32,12 +32,7 @@ app.get('/users', async (req, res) => {
 app.get('/users/:id', async (req, res) => {
     try {
         const user = await User.findById(req.params.id);
-
-        if (!user) {
-            return res.status(404).send();
-        }
-
-        res.send(user);
+        sendResponseOrNotFound(user, res);
     } catch (e) {
         res.status(500).send(e);
     }
@@ -53,16 +48,21 @@ app.patch('/users/:id', async (req, res) => {
 
     try {
         const user = await User.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
-
-        if (!user) {
-            return res.status(404).send();
-        }
-
-        res.status(200).send(user);
+        return sendResponseOrNotFound(user, res);
     } catch (e) {
         res.status(400).send(e);
     }
 })
+
+app.delete('/users/:id', async (req, res) => {
+    try {
+        const user = User.findByIdAndDelete(req.params.id);
+
+        return sendResponseOrNotFound(user, res, 204);
+    } catch (e) {
+        return res.status(400).send(e);
+    }
+});
 
 app.post('/tasks', async (req, res) => {
     const task = new Task(req.body);
@@ -70,7 +70,6 @@ app.post('/tasks', async (req, res) => {
     try {
         await task.save();
         res.status(201).send(task);
-
     } catch (e) {
         res.status(400).send(e);
     }
@@ -87,15 +86,21 @@ app.patch('/tasks/:id', async (req, res) => {
     try {
         const task = await Task.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
 
-        if (!task) {
-            return res.status(404).send();
-        }
-
-        res.status(200).send(task);
+        return sendResponseOrNotFound(task, res);
     } catch (e) {
         res.status(400).send(e);
     }
 })
+
+app.delete('/tasks/:id', async (req, res) => {
+    try {
+        const task = await Task.findByIdAndDelete(req.params.id);
+
+        return sendResponseOrNotFound(task, res, 204);
+    } catch (e) {
+        return res.status(400).send(e);
+    }
+});
 
 
 app.get('/tasks', async (req, res) => {
@@ -111,11 +116,7 @@ app.get('/tasks/:id', async (req, res) => {
     try {
         const task = await Task.findById(req.params.id);
 
-        if (!task) {
-            return res.status(404).send();
-        }
-
-        res.send(task);
+        return sendResponseOrNotFound(task, res);
     } catch (e) {
         res.status(500).send(e);
     }
@@ -127,3 +128,16 @@ app.listen(port, () => {
 });
 
 const validUpdates = (keys, allowedFields) => keys.every(key => allowedFields.includes(key));
+
+const sendResponseOrNotFound = (item, res, successStatus = 200) => {
+    if (!item) {
+        return res.status(404).send();
+    }
+
+    switch (successStatus) {
+        case 204:
+            return res.status(204).send();
+        default:
+            return res.status(successStatus).send(item);
+    }
+}
