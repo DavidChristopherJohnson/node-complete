@@ -13,4 +13,4 @@ const sendResponseOrNotFound = (item, res, successStatus = 200) => {
     }
 }
 
-module.exports = [validUpdates, sendResponseOrNotFound];
+module.exports = { validUpdates, sendResponseOrNotFound };
