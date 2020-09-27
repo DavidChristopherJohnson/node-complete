@@ -4,6 +4,17 @@ const UsersRouter = require('./routers/users');
 
 const app = express();
 const port = process.env.port || 3000;
+const isMaintanceMode = process.env.isMaintanceMode || false;
+
+//Maintenance code
+// app.use((req, res, next) => {
+//     if (isMaintanceMode) {
+//         res.status(503).send('The site is undergoing maintenance')
+//     }
+//     else {
+//         next();
+//     }
+// })
 
 app.use(express.json());
 app.use(TasksRouter);
