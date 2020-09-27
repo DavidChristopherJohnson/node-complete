@@ -6,7 +6,10 @@ const router = new express.Router();
 const auth = require('../middleware/auth');
 
 router.post('/tasks', auth, async (req, res) => {
-    const task = new Task(req.body);
+    const task = new Task({
+        ...req.body,
+        owner: req.user
+    });
 
     try {
         await task.save();
@@ -16,7 +19,27 @@ router.post('/tasks', auth, async (req, res) => {
     }
 })
 
-router.patch('/tasks/:id', auth, async (req, res) => {
+router.get('/tasks', async (req, res) => {
+    try {
+        const tasks = await Task.find({});
+        res.send(tasks);
+    } catch (e) {
+        res.status(500).send(e);
+    }
+})
+
+router.get('/tasks/:id', auth, async (req, res) => {
+    const _id = req.params.id;
+
+    try {
+        const task = await Task.findOne({ _id, owner: req.user._id })
+        return sendResponseOrNotFound(task, res);
+    } catch (e) {
+        res.status(500).send(e);
+    }
+})
+
+router.patch('/tasks/:id', async (req, res) => {
     const keys = Object.keys(req.body)
     const allowedUpdates = ["description", "completed"]
 
@@ -42,7 +65,7 @@ router.patch('/tasks/:id', auth, async (req, res) => {
     }
 })
 
-router.delete('/tasks/:id', auth, async (req, res) => {
+router.delete('/tasks/:id', async (req, res) => {
     try {
         const task = await Task.findByIdAndDelete(req.params.id);
 
@@ -51,24 +74,5 @@ router.delete('/tasks/:id', auth, async (req, res) => {
         return res.status(400).send(e);
     }
 });
-
-router.get('/tasks', auth, async (req, res) => {
-    try {
-        const tasks = await Task.find({});
-        res.send(tasks);
-    } catch (e) {
-        res.status(500).send(e);
-    }
-})
-
-router.get('/tasks/:id', auth, async (req, res) => {
-    try {
-        const task = await Task.findById(req.params.id);
-
-        return sendResponseOrNotFound(task, res);
-    } catch (e) {
-        res.status(500).send(e);
-    }
-})
 
 module.exports = router;
